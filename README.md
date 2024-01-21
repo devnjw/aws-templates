@@ -1,1 +1,5 @@
-## A simple example of integrating AWS Lambda and API Gateway with FastAPI using AWS CDK.
+# Simple templates for quick AWS configuration
+
+## Template list
+- [lambda-fastapi-cdk](./lambda-fastapi-cdk/README.md)
+- [lambda-fastapi-dynamodb-cdk](./lambda-fastapi-dynamodb-cdk/README.md)
