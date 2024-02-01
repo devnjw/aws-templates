@@ -1,0 +1,43 @@
+services:
+  db:
+    image: amazon/dynamodb-local
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
+    ports:
+      - 8000:8000
+    volumes:
+      - dynamodb_data:/home/dynamodblocal
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin.Dockerfile
+    ports:
+    - 8001:8001
+    environment:
+      - DYNAMO_ENDPOINT=http://db:8000
+      - AWS_REGION=example
+      - AWS_ACCESS_KEY_ID=example
+      - AWS_SECRET_ACCESS_KEY=example
+    depends_on:
+      - db
+
+  api:
+    image: docker.io/python:3.10
+    build:
+      context: ./api
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+    volumes:
+      - ./api:/app
+    ports:
+      - 8080:8080
+    depends_on: 
+      - db
+    environment:
+      - STAGE=local
+      - DYNAMO_ENDPOINT=http://db:8000
+      - AWS_REGION=example
+      - AWS_ACCESS_KEY_ID=example
+      - AWS_SECRET_ACCESS_KEY=example
+
+volumes:
+  dynamodb_data:

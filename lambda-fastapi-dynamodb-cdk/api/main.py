@@ -1,9 +1,10 @@
+import os
 import logging
 import uvicorn
 from fastapi import FastAPI
 from mangum import Mangum
 
-import boto3
+from db import init_aws_dynamodb, init_local_dynamodb, init_table
 
 app = FastAPI()
 handler = Mangum(app)
@@ -11,25 +12,15 @@ handler = Mangum(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+STAGE = os.environ.get("STAGE", "")
+TABLE_NAME = "Items"
+
 try:
-    dynamodb = boto3.resource("dynamodb")
-    table_name = "Recipes"
-    if table_name not in [table.name for table in dynamodb.tables.all()]:
-        dynamodb.create_table(
-            TableName=table_name,
-            AttributeDefinitions=[
-                {"AttributeName": "uid", "AttributeType": "S"},
-            ],
-            KeySchema=[
-                {"AttributeName": "uid", "KeyType": "HASH"},
-            ],
-            ProvisionedThroughput={
-                "ReadCapacityUnits": 10,
-                "WriteCapacityUnits": 10,
-            },
-        )
-    table = dynamodb.Table(table_name)
-    logger.info(f"Connected to DynamoDB table: {table_name}")
+    if STAGE == "local":
+        dynamodb = init_local_dynamodb()
+    else:
+        dynamodb = init_aws_dynamodb()
+    table = init_table(dynamodb, TABLE_NAME)
 except Exception as e:
     logger.error(f"Error connecting to DynamoDB: {e}")
     raise e
